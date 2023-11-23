@@ -2,6 +2,9 @@
 #define TOOLS_H
 
 #include "WString.h"
+#include <iostream>
+#include "defines.h"
+#include <WiFi.h>
 
 class Tools
 {
@@ -17,6 +20,7 @@ private:
 
 public:
     static String get_wifi_quality(int dbm);
+    static void log_wifi_event(WiFiEvent_t event);
 };
 
 #endif
