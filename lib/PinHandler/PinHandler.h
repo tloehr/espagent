@@ -9,7 +9,7 @@
 #include <list>
 #include <string>
 #include <ArduinoJson.h>
-#include "defines.h"
+#include "../../include/defines.h"
 #include <Adafruit_MCP23X17.h>
 
 #define LED_WHITE "wht"

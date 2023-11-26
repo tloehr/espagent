@@ -41,7 +41,7 @@ int vars[NUMBER_OF_TIMERS_VARS];
 Button2 btn01;
 Button2 btn02;
 
-// PinHandler pinHandler = PinHandler();
+PinHandler pinHandler = PinHandler();
 
 void connectToWiFi()
 {
@@ -111,13 +111,14 @@ void connectToMQTT()
   }
 
   debug("MQTT connected");
-  mqttclient.onMessage(onMessageReceived);
+  // mqttclient.onMessage(onMessageReceived);
+  mqttclient.onMessage(proc_commands);
   mqttclient.subscribe(MQTT_INBOUND MY_ID "/#");
 }
 
 bool every_25ms(void *argument)
 {
-  // pinHandler.loop();
+  pinHandler.loop();
   return true;
 }
 
@@ -133,9 +134,9 @@ bool every_second(void *argument)
   return true;
 }
 
-void proc_commands(char *topic, byte *payload)
+void proc_commands(String &topic, String &payload)
 {
-  debug("Message arrived in topic: " + String(topic) + " with Payload: " + String((char *)payload));
+  debug("Message arrived in topic: " + topic + " with Payload: " + payload);
 
   // last part of topic is the command
   char *cmd = strrchr(topic, '/');
@@ -164,19 +165,9 @@ void proc_commands(char *topic, byte *payload)
 
 void button_handler(Button2 &b)
 {
-  const char *topic = MQTT_OUTBOUND MY_ID "/btn0";
+  debugln("entry button handler");
 
-  StaticJsonDocument<32> button_event;
-  button_event["button"] = b.isPressed() ? "down" : "up";
-  String output;
-  serializeJson(button_event, output);
-  const char *payload = output.c_str();
-  const char *t = topic;
-  String t1 = String(topic) + String(b.getID());
-
-  mqttclient.publish(t1.c_str(), payload, true, true, 1); // <== QOS 1 and retained
-  //  Topic: `/rlg/evt/ag01/btn01` or `/rlg/evt/ag01/btn02`
-  button_event.clear();
+  debugln("exit button handler");
 }
 
 void setup()
@@ -187,17 +178,17 @@ void setup()
   mqttclient.begin(MQTT_BROKER, wifiClient);
   connectToMQTT();
 
-  // btn01.begin(BTN01);
-  // btn01.setID(1);
-  // btn01.setPressedHandler(button_handler);
-  // btn01.setReleasedHandler(button_handler);
+  btn01.begin(BTN01);
+  btn01.setID(1);
+  btn01.setPressedHandler(button_handler);
+  btn01.setReleasedHandler(button_handler);
 
-  // btn02.begin(BTN02);
-  // btn02.setID(2);
-  // btn02.setPressedHandler(button_handler);
-  // btn02.setReleasedHandler(button_handler);
+  btn02.begin(BTN02);
+  btn02.setID(2);
+  btn02.setPressedHandler(button_handler);
+  btn02.setReleasedHandler(button_handler);
 
-  // timer.every(25, every_25ms);
+  timer.every(25, every_25ms);
   // timer.every(1000, every_xsecond);
   // timer.every(30000, every_30s);
 }
@@ -212,6 +203,6 @@ void loop()
     connectToMQTT();
   }
   timer.tick();
-  // btn01.loop();
-  // btn02.loop();
+  btn01.loop();
+  btn02.loop();
 }

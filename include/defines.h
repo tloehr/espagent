@@ -27,5 +27,6 @@
 #define GPB6 14
 #define GPB7 15
 
-#define BTN01 13
-#define BTN02 15
+// these pins are INPUT ONLY. So perfect when using buttons.
+#define BTN01 32
+#define BTN02 33
