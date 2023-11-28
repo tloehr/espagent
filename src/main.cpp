@@ -21,7 +21,7 @@ void connectToMQTT();
 void onMessageReceived(String &topic, String &payload);
 bool every_25ms(void *argument);
 bool every_second(void *argument);
-void proc_commands(char *topic, byte *payload, unsigned int length);
+void proc_commands(String &topic, String &payload);
 void button_handler(Button2 &b);
 
 // network setup
@@ -41,7 +41,7 @@ int vars[NUMBER_OF_TIMERS_VARS];
 Button2 btn01;
 Button2 btn02;
 
-PinHandler pinHandler = PinHandler();
+PinHandler pinHandler;
 
 void connectToWiFi()
 {
@@ -110,9 +110,9 @@ void connectToMQTT()
     vTaskDelay(250);
   }
 
-  debug("MQTT connected");
-  // mqttclient.onMessage(onMessageReceived);
-  mqttclient.onMessage(proc_commands);
+  debugln("MQTT connected");
+  mqttclient.onMessage(onMessageReceived);
+  // mqttclient.onMessage(proc_commands);
   mqttclient.subscribe(MQTT_INBOUND MY_ID "/#");
 }
 
@@ -139,10 +139,12 @@ void proc_commands(String &topic, String &payload)
   debug("Message arrived in topic: " + topic + " with Payload: " + payload);
 
   // last part of topic is the command
-  char *cmd = strrchr(topic, '/');
+  // char *cmd = strrchr(topic, '/');
+  int pos_of_slash = topic.lastIndexOf("/");
+  String cmd = topic.substring(pos_of_slash);
 
   StaticJsonDocument<1024> incoming;
-  DeserializationError jsonError = deserializeJson(incoming, (char *)payload);
+  DeserializationError jsonError = deserializeJson(incoming, payload);
 
   // Test if parsing succeeds.
   if (jsonError)
@@ -152,11 +154,11 @@ void proc_commands(String &topic, String &payload)
     return;
   }
 
-  if (String(cmd) == String("/visual") || String(cmd) == String("/acoustic"))
+  if (cmd.equals("/visual") || cmd.equals("/acoustic"))
   {
-    // pinHandler.parse_incoming(cmd, incoming);
+    pinHandler.parse_incoming(incoming);
   }
-  else if (String(cmd) == String("/timers"))
+  else if (cmd.equals("/timers"))
   {
     // int value = incoming.
   }
@@ -177,6 +179,8 @@ void setup()
   connectToWiFi();
   mqttclient.begin(MQTT_BROKER, wifiClient);
   connectToMQTT();
+
+  pinHandler.begin();
 
   btn01.begin(BTN01);
   btn01.setID(1);

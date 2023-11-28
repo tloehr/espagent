@@ -10,6 +10,7 @@
 #include <string>
 #include <ArduinoJson.h>
 #include "../../include/defines.h"
+#include "PinScheme.h"
 #include <Adafruit_MCP23X17.h>
 
 #define LED_WHITE "wht"
@@ -38,32 +39,27 @@
 #define NUMBER_OF_ACOUSTIC_PINS 5
 #define NUMBER_OF_LED_PINS 5
 #define NUMBER_OF_ALL_PINS 10
-#define EOL "\n"
 
 class PinHandler
 {
 private:
     Adafruit_MCP23X17 mcp;
-    std::list<int> schemes[NUMBER_OF_ALL_PINS];
-    std::list<int> backup_schemes[NUMBER_OF_ALL_PINS];
-    long repeat[NUMBER_OF_ALL_PINS] = {};
-    int pin_states[NUMBER_OF_ALL_PINS] = {};
+
+    PinScheme pins[NUMBER_OF_ALL_PINS];
     StaticJsonDocument<1500> scheme_macros;
 
-    String all_keys[NUMBER_OF_ALL_PINS] = {LED_WHITE, LED_RED, LED_YELLOW, LED_GREEN, LED_BLUE, SIREN1, SIREN2, SIREN3, SIREN4, BUZZER};
+    String all_json_keys[NUMBER_OF_ALL_PINS] = {LED_WHITE, LED_RED, LED_YELLOW, LED_GREEN, LED_BLUE, SIREN1, SIREN2, SIREN3, SIREN4, BUZZER};
     int gpio_assignment[NUMBER_OF_ALL_PINS] = {PIN_WHITE, PIN_RED, PIN_YELLOW, PIN_GREEN, PIN_BLUE, PIN_SIREN1, PIN_SIREN2, PIN_SIREN3, PIN_SIREN4, PIN_BUZZER};
     String led_all[5] = {LED_WHITE, LED_RED, LED_YELLOW, LED_GREEN, LED_BLUE};
     String sir_all[5] = {SIREN1, SIREN2, SIREN3, SIREN4, BUZZER};
 
     int find_in_keys(const String &element);
-    void off(const String &);
-    int gpio[NUMBER_OF_ALL_PINS] = {};
 
 public:
     PinHandler();
+    void begin();
 
-    // void init();
-    void parse_incoming(const String &cmd, StaticJsonDocument<1024> incoming);
+    void parse_incoming(StaticJsonDocument<1024> incoming);
     void loop();
 };
 
