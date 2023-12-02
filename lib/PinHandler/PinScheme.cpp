@@ -19,7 +19,7 @@ void PinScheme::set_repeat(int repeat)
 
 void PinScheme::off()
 {
-    debug("setting  to off");
+    debugln("setting  to off");
     scheme.clear();
     backup.clear();
     mcp.digitalWrite(pin, LOW);
@@ -49,7 +49,7 @@ bool PinScheme::is_empty()
 
 /**
  * sets the scheme pointer to the next value and switches the pin to the new state (on and off)
- * if the end of the scheme is reached and there are still REPEATs to be done, the scheme
+ * if the end of the scheme is reached and there are still REPEATs > 0, the scheme
  * will be restored from the backup_scheme.
  *
  */
@@ -71,17 +71,14 @@ void PinScheme::next()
     if (scheme.empty())
     {
         if (repeat > 0)
-        { // last pop emptied the list, but we need to repeat at least once more
+        { // last pop() emptied the list, but we need to repeat at least once more
             debugln("list is empty - refilling for repeat# " + String(repeat));
 
-            // REPEAT
             // copy the backup to the scheme
-            std::copy(backup.begin(), backup.end(),
-                      std::back_inserter(scheme));
-
+            std::copy(backup.begin(), backup.end(), std::back_inserter(scheme));
             repeat--;
         }
-        else // no more repeats ? then we clear the backup, too
+        else // no more repeats ?
         {
             backup.clear();
         }

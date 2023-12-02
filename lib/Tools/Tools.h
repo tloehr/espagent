@@ -18,6 +18,7 @@ private:
     static const int WIFI_BAD = -90;
     static const int NO_WIFI = -99;
 
+
 public:
     static String get_wifi_quality(int dbm);
     static void log_wifi_event(WiFiEvent_t event);

@@ -6,18 +6,18 @@
 
 PinHandler::PinHandler()
 {
-    debug("yay");
 }
 
 void PinHandler::begin()
 {
+    // Wire.begin(I2C_SDA, I2C_SCL);
     while (!mcp.begin_I2C())
     {
-        debugln("Error finding mcp23017.");
+        debugln("Error finding mcp23017 at 0x20.");
         vTaskDelay(1000);
     }
 
-    DeserializationError jsonError = deserializeJson(scheme_macros, "");
+    // DeserializationError jsonError = deserializeJson(scheme_macros, "");
 
     for (int i = 0; i < NUMBER_OF_ALL_PINS; i++)
     {
@@ -39,7 +39,7 @@ void PinHandler::begin()
  *
  * @param incoming the json document containing the schemes from the rlgcommander.
  */
-void PinHandler::parse_incoming(StaticJsonDocument<1024> incoming)
+void PinHandler::parse_incoming(StaticJsonDocument<2048> incoming)
 {
     // preprocess the json for the sir_all or led_all pin selection
     if (incoming.containsKey("sir_all"))
@@ -98,6 +98,8 @@ void PinHandler::parse_incoming(StaticJsonDocument<1024> incoming)
 
         for (int iEl = 0; iEl < incoming[key]["scheme"].size(); iEl++)
         {
+            // transforms a time like "100" to "25,25,25,25"
+            // where PERIOD is 25
             int value = incoming[key]["scheme"].as<JsonArray>()[iEl];
             int multiplier = std::abs(value / PERIOD);
             int sign = value >= 0 ? 1 : -1;

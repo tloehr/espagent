@@ -10,6 +10,7 @@
 
 #define MQTT_INBOUND "rlg/cmd/"
 #define MQTT_OUTBOUND "rlg/evt/"
+#define MQTT_STATUS "/status"
 #define MQTT_BROKER "192.168.232.253"
 #define MY_ID "ag22"
 
@@ -25,12 +26,13 @@ void proc_commands(String &topic, String &payload);
 void button_handler(Button2 &b);
 
 // network setup
-const char *ssid = WIFI_SSID;
-const char *password = WIFI_PSK;
+const char *ssid = WIFI_SSID1;
+const char *password = WIFI_PSK1;
 unsigned long previousMillis = 0;
 unsigned long check_wifi_interval = 30000;
 WiFiClient wifiClient;
-MQTTClient mqttclient;
+MQTTClient mqttclient(2048);
+unsigned long reconnects = 0;
 // network setup
 
 auto timer = timer_create_default();
@@ -89,6 +91,7 @@ void onMessageReceived(String &topic, String &payload)
 
 void connectToMQTT()
 {
+  reconnects++;
   // note: https://forum.arduino.cc/t/once-wificlient-fails-it-never-connects-again/1045456/6
   // and this: https://forum.arduino.cc/t/once-wificlient-fails-it-never-connects-again/1045456/2
   debug("checking wifi...");
@@ -111,8 +114,8 @@ void connectToMQTT()
   }
 
   debugln("MQTT connected");
-  mqttclient.onMessage(onMessageReceived);
-  // mqttclient.onMessage(proc_commands);
+  // mqttclient.onMessage(onMessageReceived);
+  mqttclient.onMessage(proc_commands);
   mqttclient.subscribe(MQTT_INBOUND MY_ID "/#");
 }
 
@@ -122,8 +125,39 @@ bool every_25ms(void *argument)
   return true;
 }
 
+bool every_minute(void *argument)
+{
+  //  public void setStatus(JSONObject status) {
+  //       this.status = status;
+  //       software_version = status.optString("version", "dummy");
+  //       reconnects = status.optInt("reconnects");
+  //       failed_pings = status.optInt("failed_pings");
+  //       ip = status.optString("ip", "unknown");
+  //       wifi = status.optString("wifi", "no_wifi").toLowerCase();
+  //       bi_wifi_icon = wifi_icon.getOrDefault(wifi, "bi-question-circle-fill");
+  //       setAp(status.optString("ap", "no_ap"));
+  //       timestamp = LocalDateTime.now();
+  //   }
+
+  StaticJsonDocument<512> status;
+  status["version"] = "espagent v1.0";
+  status["reconnects"] = reconnects - 1;
+  status["failed_pings"] = 0;
+  status["ip"] = WiFi.localIP();
+  status["rssi"] = WiFi.RSSI();
+  status["wifi"] = Tools::get_wifi_quality(WiFi.RSSI());
+
+  String json_string;
+  serializeJson(status, json_string);
+
+  mqttclient.publish(MQTT_OUTBOUND MY_ID MQTT_STATUS, json_string);
+
+  return true;
+}
+
 bool every_second(void *argument)
 {
+
   // recalculate timers
   // for (int i = 0; i < NUMBER_OF_TIMERS_VARS; i++)
   // {
@@ -156,7 +190,12 @@ void proc_commands(String &topic, String &payload)
 
   if (cmd.equals("/visual") || cmd.equals("/acoustic"))
   {
+    unsigned long then = millis();
     pinHandler.parse_incoming(incoming);
+    unsigned long now = millis();
+
+    debug("parse time in ms: ");
+    debugln(now - then);
   }
   else if (cmd.equals("/timers"))
   {
@@ -194,14 +233,14 @@ void setup()
 
   timer.every(25, every_25ms);
   // timer.every(1000, every_xsecond);
-  // timer.every(30000, every_30s);
+  timer.every(60000, every_minute);
 }
 
 void loop()
 {
   // see https://github.com/256dpi/arduino-mqtt/blob/master/examples/ESP32DevelopmentBoard/ESP32DevelopmentBoard.ino
   mqttclient.loop();
-  delay(10); // <- fixes some issues with WiFi stability
+  delay(10); // <- fixes some issues with WiFi stability. esp8266 only
   if (!mqttclient.connected())
   {
     connectToMQTT();
