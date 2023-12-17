@@ -10,7 +10,7 @@
 #include <ArduinoJson.h>
 #include "../../include/defines.h"
 #include "PinScheme.h"
-#include "SchemeMacros.h"
+// #include "SchemeMacros.h"
 #include <Adafruit_MCP23X17.h>
 
 #define LED_WHITE "wht"
@@ -35,7 +35,6 @@
 #define PIN_SIREN4 GPB0
 #define PIN_BUZZER GPB1
 
-#define PERIOD 25
 #define NUMBER_OF_ACOUSTIC_PINS 5
 #define NUMBER_OF_LED_PINS 5
 #define NUMBER_OF_ALL_PINS 10
@@ -47,9 +46,8 @@ class PinHandler
 {
 private:
   Adafruit_MCP23X17 mcp;
-  SchemeMacros macros;
+  // SchemeMacros scheme_macros;
   PinScheme pins[NUMBER_OF_ALL_PINS];
-  // StaticJsonDocument<1500> scheme_macros;
 
   String all_json_keys[NUMBER_OF_ALL_PINS] = {LED_WHITE, LED_RED, LED_YELLOW, LED_GREEN, LED_BLUE, SIREN1, SIREN2, SIREN3, SIREN4, BUZZER};
   int gpio_assignment[NUMBER_OF_ALL_PINS] = {PIN_WHITE, PIN_RED, PIN_YELLOW, PIN_GREEN, PIN_BLUE, PIN_SIREN1, PIN_SIREN2, PIN_SIREN3, PIN_SIREN4, PIN_BUZZER};
@@ -61,7 +59,7 @@ private:
 public:
   PinHandler();
   void begin();
-  void parse_incoming(StaticJsonDocument<2048> incoming);
+  void parse_incoming(StaticJsonDocument<2048> &incoming);
   void loop();
 };
 

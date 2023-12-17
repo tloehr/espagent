@@ -2,7 +2,8 @@
 #define SCHEME_MACROS_H
 
 #include <Arduino.h>
-#include <SimpleMap.h>
+
+#include <ArduinoJson.h>
 
 class SchemeMacros
 {
@@ -17,9 +18,12 @@ private:
                                                                               return -1; // a is smaller than b
                                                                       });
 
+    StaticJsonDocument<3100> json;
+
 public:
     SchemeMacros();
-    String get_macro(String key);
+    JsonObject get_macro(String key);
+    bool SchemeMacros::has(String key);
 };
 
 #endif

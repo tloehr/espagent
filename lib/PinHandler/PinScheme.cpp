@@ -9,6 +9,9 @@ PinScheme::PinScheme(Adafruit_MCP23X17 &mcp, int pin)
     this->mcp = mcp;
     this->pin = pin;
     pin_state = 0;
+    scheme_length = 0;
+    pointer = 0;
+    repeat = 0;
     mcp.pinMode(pin, OUTPUT);
 }
 
@@ -17,34 +20,29 @@ void PinScheme::set_repeat(int repeat)
     this->repeat = repeat;
 }
 
-void PinScheme::off()
+void PinScheme::clear()
 {
-    debugln("setting  to off");
-    scheme.clear();
-    backup.clear();
+    pointer = 0;
+    repeat = 0;
+    scheme_length = 0;
     mcp.digitalWrite(pin, LOW);
 }
 
-void PinScheme::clear_scheme()
+void PinScheme::init(int repeat, JsonArray &json_scheme)
 {
-    scheme.clear();
-}
+    this->pointer = 0;
+    this->repeat = repeat;
+    this->scheme_length = json_scheme.size();
 
-void PinScheme::add_scheme_entry(int entry)
-{
-    scheme.push_back(entry);
-}
+    for (int n = 0; n < this->scheme_length; n++)
+    {
+        int value = json_scheme[n];
+        int multiplier = std::abs(value / PERIOD);
+        int sign = value >= 0 ? 1 : -1;
 
-void PinScheme::backup_scheme()
-{
-    backup.clear();
-    std::copy(scheme.begin(), scheme.end(),
-              std::back_inserter(backup));
-}
-
-bool PinScheme::is_empty()
-{
-    return scheme.empty();
+        for (int i = 0; i < multiplier; i++)
+            scheme[i] = PERIOD * sign;
+    }
 }
 
 /**
@@ -55,32 +53,30 @@ bool PinScheme::is_empty()
  */
 void PinScheme::next()
 {
-    int front = scheme.front();
-    if (pin_state == 0)
-        pin_state = front;
-    scheme.pop_front();
+    if (scheme_length == 0)
+        return;
+    int new_state = scheme[pointer];
+    if (pointer == 0)
+        pin_state = new_state;
+    pointer++;
 
     // check if pin is ON already
-    if (pin_state != front)
+    if (pin_state != new_state)
     {
-        mcp.digitalWrite(pin, front > 0 ? HIGH : LOW);
-        pin_state = front;
+        mcp.digitalWrite(pin, new_state > 0 ? HIGH : LOW);
+        pin_state = new_state;
     }
 
     // refill if necessary
-    if (scheme.empty())
+    if (pointer >= scheme_length)
     {
         if (repeat > 0)
-        { // last pop() emptied the list, but we need to repeat at least once more
-            debugln("list is empty - refilling for repeat# " + String(repeat));
-
-            // copy the backup to the scheme
-            std::copy(backup.begin(), backup.end(), std::back_inserter(scheme));
+        { // last next() reached the end of the list, but we need to repeat at least once more
+            debugln("list is empty - repeating # " + String(repeat));
+            pointer = 0;
             repeat--;
         }
         else // no more repeats ?
-        {
-            backup.clear();
-        }
+            clear();
     }
 }

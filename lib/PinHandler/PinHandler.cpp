@@ -10,15 +10,11 @@ PinHandler::PinHandler()
 
 void PinHandler::begin()
 {
-    // Wire.begin(I2C_SDA, I2C_SCL);
     while (!mcp.begin_I2C())
     {
         debugln("Error finding mcp23017 at 0x20.");
         vTaskDelay(1000);
     }
-
-    // DeserializationError jsonError = deserializeJson(scheme_macros, "");
-
     for (int i = 0; i < NUMBER_OF_ALL_PINS; i++)
     {
         debugln("PinHandler " + String(i));
@@ -39,7 +35,7 @@ void PinHandler::begin()
  *
  * @param incoming the json document containing the schemes from the rlgcommander.
  */
-void PinHandler::parse_incoming(StaticJsonDocument<2048> incoming)
+void PinHandler::parse_incoming(StaticJsonDocument<2048> &incoming)
 {
     // preprocess the json for the sir_all or led_all pin selection
     if (incoming.containsKey("sir_all"))
@@ -85,6 +81,14 @@ void PinHandler::parse_incoming(StaticJsonDocument<2048> incoming)
             continue;
         }
 
+        // check if macros were used
+        // and replace if necessary
+        // if (incoming[key].size() < 25 && scheme_macros.has(incoming[key]))
+        //{
+        //    incoming[key] = scheme_macros.get_macro(incoming[key]);
+        //}
+
+        // some structure check - rudimentary
         if (!incoming[key].containsKey("repeat") || !incoming[key].containsKey("scheme"))
             continue;
 
@@ -92,23 +96,9 @@ void PinHandler::parse_incoming(StaticJsonDocument<2048> incoming)
 
         int indexOfKey = find_in_keys(key);
 
-        // store the repeat value for this key
-        pins[indexOfKey].set_repeat(incoming[key]["repeat"] < 0 ? LONG_MAX : incoming[key]["repeat"].as<int>() - 1);
-        pins[indexOfKey].clear_scheme();
-
-        for (int iEl = 0; iEl < incoming[key]["scheme"].size(); iEl++)
-        {
-            // transforms a time like "100" to "25,25,25,25"
-            // where PERIOD is 25
-            int value = incoming[key]["scheme"].as<JsonArray>()[iEl];
-            int multiplier = std::abs(value / PERIOD);
-            int sign = value >= 0 ? 1 : -1;
-
-            for (int i = 0; i < multiplier; i++)
-                pins[indexOfKey].add_scheme_entry(PERIOD * sign);
-
-            pins[indexOfKey].backup_scheme();
-        }
+        int repeat = incoming[key]["repeat"] < 0 ? INT_MAX : incoming[key]["repeat"].as<int>() - 1;
+        JsonArray scheme = incoming[key]["scheme"].as<JsonArray>();
+        pins[indexOfKey].init(repeat, scheme);
     }
 }
 

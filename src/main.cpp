@@ -140,7 +140,7 @@ bool every_minute(void *argument)
   //   }
 
   StaticJsonDocument<512> status;
-  status["version"] = "espagent v1.0";
+  status["version"] = "espAgent v1.0";
   status["reconnects"] = reconnects - 1;
   status["failed_pings"] = 0;
   status["ip"] = WiFi.localIP();
@@ -177,7 +177,7 @@ void proc_commands(String &topic, String &payload)
   int pos_of_slash = topic.lastIndexOf("/");
   String cmd = topic.substring(pos_of_slash);
 
-  StaticJsonDocument<1024> incoming;
+  StaticJsonDocument<2048> incoming;
   DeserializationError jsonError = deserializeJson(incoming, payload);
 
   // Test if parsing succeeds.
@@ -191,6 +191,7 @@ void proc_commands(String &topic, String &payload)
   if (cmd.equals("/visual") || cmd.equals("/acoustic"))
   {
     unsigned long then = millis();
+    // todo: use reference here
     pinHandler.parse_incoming(incoming);
     unsigned long now = millis();
 
