@@ -25,6 +25,7 @@ void PinScheme::clear()
     pointer = 0;
     repeat = 0;
     scheme_length = 0;
+    delete scheme;
     mcp.digitalWrite(pin, LOW);
 }
 
@@ -33,8 +34,9 @@ void PinScheme::init(int repeat, JsonArray &json_scheme)
     this->pointer = 0;
     this->repeat = repeat;
     this->scheme_length = json_scheme.size();
+    this->scheme = new int[scheme_length];
 
-    for (int n = 0; n < this->scheme_length; n++)
+    for (int n = 0; n < scheme_length; n++)
     {
         int value = json_scheme[n];
         int multiplier = std::abs(value / PERIOD);

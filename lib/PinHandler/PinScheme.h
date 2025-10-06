@@ -18,7 +18,7 @@ class PinScheme
 {
 private:
     Adafruit_MCP23X17 mcp;
-    int scheme[2048];
+    int *scheme;
     int scheme_length;
     int repeat;
     int pin_state;

@@ -10,7 +10,7 @@
 #include <ArduinoJson.h>
 #include "../../include/defines.h"
 #include "PinScheme.h"
-// #include "SchemeMacros.h"
+#include "SchemeMacros.h"
 #include <Adafruit_MCP23X17.h>
 
 #define LED_WHITE "wht"
@@ -46,7 +46,7 @@ class PinHandler
 {
 private:
   Adafruit_MCP23X17 mcp;
-  // SchemeMacros scheme_macros;
+  SchemeMacros scheme_macros;
   PinScheme pins[NUMBER_OF_ALL_PINS];
 
   String all_json_keys[NUMBER_OF_ALL_PINS] = {LED_WHITE, LED_RED, LED_YELLOW, LED_GREEN, LED_BLUE, SIREN1, SIREN2, SIREN3, SIREN4, BUZZER};

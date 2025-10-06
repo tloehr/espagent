@@ -11,7 +11,7 @@
 #define MQTT_INBOUND "rlg/cmd/"
 #define MQTT_OUTBOUND "rlg/evt/"
 #define MQTT_STATUS "/status"
-#define MQTT_BROKER "192.168.232.253"
+#define MQTT_BROKER "192.168.232.27"
 #define MY_ID "ag22"
 
 #define NUMBER_OF_TIMERS_VARS 10
@@ -26,8 +26,8 @@ void proc_commands(String &topic, String &payload);
 void button_handler(Button2 &b);
 
 // network setup
-const char *ssid = WIFI_SSID1;
-const char *password = WIFI_PSK1;
+const char *ssid = WIFI_SSID;
+const char *password = WIFI_PSK;
 unsigned long previousMillis = 0;
 unsigned long check_wifi_interval = 30000;
 WiFiClient wifiClient;
@@ -36,9 +36,7 @@ unsigned long reconnects = 0;
 // network setup
 
 auto timer = timer_create_default();
-// int gpio_assignment[NUMBER_OF_ALL_PINS] = {13, 14, 18, 19, 21, 22, 23, 25, 26, 27}; //   2, 4, 5, 18, 19, 21, 22, 23, 25, 26
-int timers[NUMBER_OF_TIMERS_VARS];
-int vars[NUMBER_OF_TIMERS_VARS];
+StaticJsonDocument<512> timers;
 
 Button2 btn01;
 Button2 btn02;
@@ -139,6 +137,8 @@ bool every_minute(void *argument)
   //       timestamp = LocalDateTime.now();
   //   }
 
+  debugln("every_minute()");
+
   StaticJsonDocument<512> status;
   status["version"] = "espAgent v1.0";
   status["reconnects"] = reconnects - 1;
@@ -188,19 +188,33 @@ void proc_commands(String &topic, String &payload)
     return;
   }
 
-  if (cmd.equals("/visual") || cmd.equals("/acoustic"))
+  if (cmd.equals("/visual"))
   {
-    unsigned long then = millis();
-    // todo: use reference here
-    pinHandler.parse_incoming(incoming);
-    unsigned long now = millis();
+    if (incoming.containsKey("progress"))
+    {
+    }
+    else
+    {
+      unsigned long then = millis();
+      // todo: use reference here
+      pinHandler.parse_incoming(incoming);
+      unsigned long now = millis();
 
-    debug("parse time in ms: ");
-    debugln(now - then);
+      debug("parse time in ms: ");
+      debugln(now - then);
+    }
+  }
+  else if (cmd.equals("/acoustic"))
+  {
+    pinHandler.parse_incoming(incoming);
   }
   else if (cmd.equals("/timers"))
   {
-    // int value = incoming.
+    JsonObject root = incoming.as<JsonObject>();
+    for (JsonPair kv : root)
+    {
+      timers[kv.key()] = kv.value();
+    }
   }
   incoming.clear();
 }

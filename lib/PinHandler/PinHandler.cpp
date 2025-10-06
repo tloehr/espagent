@@ -42,7 +42,7 @@ void PinHandler::parse_incoming(StaticJsonDocument<2048> &incoming)
     {
         if (incoming["sir_all"] == "off")
             for (const String &key : sir_all)
-                pins[find_in_keys(key)].off();
+                pins[find_in_keys(key)].clear();
         else
             // expand json for all siren pins
             for (const String &key : sir_all)
@@ -55,7 +55,7 @@ void PinHandler::parse_incoming(StaticJsonDocument<2048> &incoming)
     {
         if (incoming["led_all"] == "off")
             for (const String &key : led_all)
-                pins[find_in_keys(key)].off();
+                pins[find_in_keys(key)].clear();
         else
             // expand json for all siren pins
             for (const String &key : led_all)
@@ -77,16 +77,16 @@ void PinHandler::parse_incoming(StaticJsonDocument<2048> &incoming)
 
         if (incoming[key] == "off")
         {
-            pins[find_in_keys(key)].off();
+            pins[find_in_keys(key)].clear();
             continue;
         }
 
+        String scheme_value;
+        serializeJson(incoming[key], scheme_value);
+
         // check if macros were used
         // and replace if necessary
-        // if (incoming[key].size() < 25 && scheme_macros.has(incoming[key]))
-        //{
-        //    incoming[key] = scheme_macros.get_macro(incoming[key]);
-        //}
+        incoming[key] = scheme_macros.get_macro(scheme_value.substring(0, 25), incoming[key]);
 
         // some structure check - rudimentary
         if (!incoming[key].containsKey("repeat") || !incoming[key].containsKey("scheme"))
@@ -108,10 +108,7 @@ void PinHandler::loop()
     {
         int indexOfKey = find_in_keys(key);
         if (indexOfKey >= NUMBER_OF_ALL_PINS)
-            continue;
-        if (pins[indexOfKey].is_empty())
-            continue;
-
+            continue;        
         pins[indexOfKey].next();
     }
 }
